@@ -1,0 +1,963 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BLANC — Premium Car Detailing Dubai</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&family=Geist+Mono:wght@300;400&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --white: #ffffff;
+  --off: #f7f6f4;
+  --light: #e8e6e1;
+  --mid: #9a9690;
+  --dark: #2a2925;
+  --black: #0e0e0c;
+  --gold: #c9a96e;
+  --serif: 'Cormorant Garamond', Georgia, serif;
+  --mono: 'Geist Mono', monospace;
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: #000;
+  color: var(--dark);
+  font-family: var(--mono);
+  font-weight: 300;
+  cursor: none;
+  overflow-x: hidden;
+}
+
+/* ── CURSOR ── */
+#cursor {
+  position: fixed;
+  width: 6px; height: 6px;
+  background: var(--white);
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 9999;
+  transform: translate(-50%, -50%);
+  transition: width .25s, height .25s, background .25s;
+  mix-blend-mode: difference;
+}
+#cursor.big { width: 40px; height: 40px; }
+
+/* ── CANVAS — постоянный фон ── */
+#bg-canvas {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  z-index: 0;
+}
+
+/* ── ЗАТЕМНЕНИЕ фона — всегда поверх canvas ── */
+#bg-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  background: rgba(0,0,0,0);
+  transition: background .4s;
+  pointer-events: none;
+}
+
+/* ── NAV ── */
+nav {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.8rem 3rem;
+}
+
+.nav-logo {
+  font-family: var(--serif);
+  font-size: 1.4rem;
+  font-weight: 300;
+  letter-spacing: .3em;
+  color: var(--white);
+  text-decoration: none;
+}
+
+.nav-links {
+  display: flex;
+  gap: 2.5rem;
+  list-style: none;
+}
+
+.nav-links a {
+  font-size: .6rem;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,.6);
+  text-decoration: none;
+  transition: color .2s;
+}
+.nav-links a:hover { color: var(--white); }
+
+.lang-btn {
+  font-size: .6rem;
+  letter-spacing: .15em;
+  color: rgba(255,255,255,.4);
+  background: none;
+  border: none;
+  font-family: var(--mono);
+  cursor: none;
+  transition: color .2s;
+}
+.lang-btn:hover { color: var(--white); }
+
+/* ── CONTENT WRAPPER — скроллится поверх фиксированного фона ── */
+#content {
+  position: relative;
+  z-index: 10;
+}
+
+/* ── HERO SECTION ── */
+#hero {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 4rem 3rem;
+  position: relative;
+}
+
+.hero-eyebrow {
+  font-size: .6rem;
+  letter-spacing: .3em;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 1rem;
+}
+
+.hero-title {
+  font-family: var(--serif);
+  font-size: clamp(3.5rem, 9vw, 8rem);
+  font-weight: 300;
+  color: var(--white);
+  line-height: .95;
+  letter-spacing: .01em;
+  margin-bottom: 1.5rem;
+}
+
+.hero-sub {
+  font-size: .7rem;
+  letter-spacing: .1em;
+  color: rgba(255,255,255,.5);
+  line-height: 1.9;
+  max-width: 360px;
+  margin-bottom: 2.5rem;
+}
+
+.hero-cta {
+  display: inline-block;
+  padding: .9rem 2rem;
+  border: 1px solid rgba(255,255,255,.3);
+  color: var(--white);
+  font-family: var(--mono);
+  font-size: .6rem;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+  text-decoration: none;
+  transition: all .25s;
+  cursor: none;
+}
+.hero-cta:hover {
+  background: var(--white);
+  color: var(--dark);
+}
+
+#scroll-hint {
+  position: absolute;
+  bottom: 2.5rem; right: 3rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: .7rem;
+  opacity: 1;
+  transition: opacity .5s;
+}
+#scroll-hint.hidden { opacity: 0; }
+#scroll-hint span {
+  font-size: .5rem;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,.3);
+  writing-mode: vertical-rl;
+}
+.scroll-line {
+  width: 1px; height: 50px;
+  background: rgba(255,255,255,.15);
+  overflow: hidden;
+  position: relative;
+}
+.scroll-line::after {
+  content: '';
+  position: absolute;
+  top: -100%; left: 0;
+  width: 100%; height: 100%;
+  background: rgba(255,255,255,.5);
+  animation: drop 1.4s ease-in-out infinite;
+}
+@keyframes drop {
+  0%   { top: -100%; }
+  100% { top: 100%; }
+}
+
+/* ── GLASS PANEL — базовый стиль для секций поверх видео ── */
+.glass {
+  background: rgba(10,10,8,.72);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border-top: 1px solid rgba(255,255,255,.07);
+}
+
+/* ── SPACER — пустое место чтобы видео «играло» пока скроллим ── */
+.video-spacer {
+  height: 60vh;
+}
+
+/* ── SECTION BASE ── */
+.section-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 6rem 3rem;
+}
+
+.section-label {
+  font-size: .55rem;
+  letter-spacing: .3em;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: .8rem;
+}
+
+.section-title {
+  font-family: var(--serif);
+  font-size: clamp(2.5rem, 5vw, 4rem);
+  font-weight: 300;
+  color: var(--white);
+  line-height: 1.1;
+  margin-bottom: 3rem;
+}
+
+/* ── SERVICES ── */
+.services-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1px;
+  background: rgba(255,255,255,.06);
+}
+
+.service-card {
+  padding: 2.2rem;
+  background: rgba(255,255,255,.03);
+  transition: background .25s;
+}
+.service-card:hover { background: rgba(255,255,255,.07); }
+
+.svc-num {
+  font-size: .5rem;
+  letter-spacing: .2em;
+  color: var(--gold);
+  margin-bottom: 1.2rem;
+}
+
+.svc-name {
+  font-family: var(--serif);
+  font-size: 1.5rem;
+  font-weight: 300;
+  color: var(--white);
+  margin-bottom: .8rem;
+  line-height: 1.2;
+}
+
+.svc-desc {
+  font-size: .6rem;
+  line-height: 1.9;
+  color: rgba(255,255,255,.4);
+  letter-spacing: .05em;
+}
+
+.svc-tag {
+  display: inline-block;
+  margin-top: 1.2rem;
+  font-size: .5rem;
+  letter-spacing: .15em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,.3);
+  border-bottom: 1px solid rgba(255,255,255,.1);
+  padding-bottom: 2px;
+}
+
+/* ── PRICING ── */
+.pricing-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1px;
+  background: rgba(255,255,255,.06);
+}
+
+.price-card {
+  padding: 2.5rem;
+  background: rgba(255,255,255,.03);
+  position: relative;
+  transition: background .25s;
+}
+.price-card:hover { background: rgba(255,255,255,.06); }
+.price-card.featured { background: rgba(201,169,110,.08); }
+
+.price-badge {
+  position: absolute;
+  top: 1.5rem; right: 1.5rem;
+  font-size: .5rem;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+  color: var(--gold);
+}
+
+.price-tier {
+  font-size: .55rem;
+  letter-spacing: .25em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,.3);
+  margin-bottom: 1rem;
+}
+
+.price-amount {
+  font-family: var(--serif);
+  font-size: 3.2rem;
+  font-weight: 300;
+  color: var(--white);
+  line-height: 1;
+  margin-bottom: .2rem;
+}
+
+.price-cur {
+  font-size: .6rem;
+  color: rgba(255,255,255,.3);
+  letter-spacing: .1em;
+  margin-bottom: 1.5rem;
+}
+
+.price-line {
+  width: 30px; height: 1px;
+  background: rgba(255,255,255,.1);
+  margin-bottom: 1.5rem;
+}
+
+.price-features {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: .7rem;
+}
+.price-features li {
+  font-size: .6rem;
+  letter-spacing: .06em;
+  color: rgba(255,255,255,.45);
+  display: flex;
+  align-items: center;
+  gap: .6rem;
+  line-height: 1.5;
+}
+.price-features li::before {
+  content: '';
+  width: 12px; height: 1px;
+  background: var(--gold);
+  flex-shrink: 0;
+}
+
+.price-btn {
+  display: block;
+  margin-top: 2rem;
+  padding: .85rem 1.5rem;
+  text-align: center;
+  font-family: var(--mono);
+  font-size: .55rem;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+  text-decoration: none;
+  border: 1px solid rgba(255,255,255,.15);
+  color: rgba(255,255,255,.6);
+  transition: all .2s;
+  cursor: none;
+}
+.price-btn:hover, .price-card.featured .price-btn {
+  border-color: var(--gold);
+  color: var(--gold);
+}
+.price-card.featured .price-btn:hover {
+  background: var(--gold);
+  color: var(--dark);
+}
+
+/* ── REVIEWS ── */
+.reviews-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1px;
+  background: rgba(255,255,255,.06);
+}
+
+.review-card {
+  padding: 2rem;
+  background: rgba(255,255,255,.03);
+}
+
+.stars {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 1.2rem;
+}
+.star {
+  width: 7px; height: 7px;
+  background: var(--gold);
+  clip-path: polygon(50% 0%,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%);
+}
+
+.review-text {
+  font-family: var(--serif);
+  font-size: 1.05rem;
+  font-weight: 300;
+  color: rgba(255,255,255,.75);
+  line-height: 1.7;
+  font-style: italic;
+  margin-bottom: 1.5rem;
+}
+
+.review-author {
+  font-size: .55rem;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,.35);
+}
+.review-car {
+  font-size: .55rem;
+  letter-spacing: .08em;
+  color: var(--gold);
+  margin-top: .3rem;
+  opacity: .7;
+}
+
+/* ── CONTACT ── */
+.contact-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 5rem;
+  align-items: start;
+}
+
+.contact-desc {
+  font-size: .65rem;
+  line-height: 2;
+  color: rgba(255,255,255,.35);
+  letter-spacing: .06em;
+  margin-bottom: 2.5rem;
+}
+
+.contact-items {
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+}
+
+.contact-item-label {
+  font-size: .5rem;
+  letter-spacing: .25em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,.2);
+  margin-bottom: .3rem;
+}
+
+.contact-item-val {
+  font-size: .7rem;
+  letter-spacing: .08em;
+  color: rgba(255,255,255,.6);
+  text-decoration: none;
+  transition: color .2s;
+  display: block;
+}
+.contact-item-val:hover { color: var(--gold); }
+
+.contact-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  background: rgba(255,255,255,.06);
+}
+
+.f-field {
+  background: rgba(255,255,255,.03);
+  border: none;
+  padding: 1.1rem 1.4rem;
+  font-family: var(--mono);
+  font-size: .63rem;
+  letter-spacing: .07em;
+  color: var(--white);
+  width: 100%;
+  outline: none;
+  transition: background .2s;
+}
+.f-field::placeholder { color: rgba(255,255,255,.2); }
+.f-field:focus { background: rgba(255,255,255,.07); }
+textarea.f-field { resize: none; height: 110px; }
+
+.f-submit {
+  padding: 1.1rem 1.4rem;
+  background: var(--gold);
+  color: var(--dark);
+  font-family: var(--mono);
+  font-size: .58rem;
+  letter-spacing: .25em;
+  text-transform: uppercase;
+  border: none;
+  cursor: none;
+  transition: opacity .2s;
+  text-align: left;
+}
+.f-submit:hover { opacity: .85; }
+
+/* ── FOOTER ── */
+footer {
+  background: rgba(5,5,4,.9);
+  border-top: 1px solid rgba(255,255,255,.05);
+  padding: 2rem 3rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: relative;
+  z-index: 10;
+}
+
+.footer-logo {
+  font-family: var(--serif);
+  font-size: 1rem;
+  letter-spacing: .35em;
+  color: rgba(255,255,255,.25);
+}
+.footer-copy {
+  font-size: .5rem;
+  letter-spacing: .12em;
+  color: rgba(255,255,255,.15);
+}
+
+/* ── REVEAL ── */
+.reveal {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity .8s ease, transform .8s ease;
+}
+.reveal.visible { opacity: 1; transform: none; }
+
+/* ── LOADER ── */
+#loader {
+  position: fixed;
+  inset: 0;
+  background: var(--black);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2rem;
+  z-index: 500;
+  transition: opacity .8s ease;
+}
+#loader.done { opacity: 0; pointer-events: none; }
+#loader-logo {
+  font-family: var(--serif);
+  font-size: 2.5rem;
+  font-weight: 300;
+  letter-spacing: .45em;
+  color: var(--white);
+}
+#loader-track {
+  width: 200px; height: 1px;
+  background: rgba(255,255,255,.08);
+  position: relative;
+}
+#loader-fill {
+  position: absolute;
+  top: 0; left: 0; height: 100%;
+  width: 0%;
+  background: var(--gold);
+  transition: width .1s linear;
+}
+#loader-pct {
+  font-size: .55rem;
+  letter-spacing: .2em;
+  color: rgba(255,255,255,.25);
+}
+
+/* ── RESPONSIVE ── */
+@media (max-width: 860px) {
+  .services-grid, .pricing-grid, .reviews-grid { grid-template-columns: 1fr; }
+  .contact-grid { grid-template-columns: 1fr; gap: 3rem; }
+  .nav-links { display: none; }
+  nav, #hero { padding: 1.5rem; }
+  .section-inner { padding: 4rem 1.5rem; }
+}
+</style>
+</head>
+<body>
+
+<div id="cursor"></div>
+
+<div id="loader">
+  <div id="loader-logo">BLANC</div>
+  <div id="loader-track"><div id="loader-fill"></div></div>
+  <div id="loader-pct">0%</div>
+</div>
+
+<!-- ФИКСИРОВАННЫЙ ФОН -->
+<canvas id="bg-canvas"></canvas>
+<div id="bg-overlay"></div>
+
+<!-- NAV -->
+<nav>
+  <a href="#" class="nav-logo">BLANC</a>
+  <ul class="nav-links">
+    <li><a href="#services" data-en="Services" data-ru="Услуги">Services</a></li>
+    <li><a href="#pricing"  data-en="Pricing"  data-ru="Цены">Pricing</a></li>
+    <li><a href="#reviews"  data-en="Reviews"  data-ru="Отзывы">Reviews</a></li>
+    <li><a href="#contact"  data-en="Contact"  data-ru="Контакты">Contact</a></li>
+  </ul>
+  <button class="lang-btn" onclick="toggleLang()">RU</button>
+</nav>
+
+<!-- КОНТЕНТ поверх фиксированного фона -->
+<div id="content">
+
+  <!-- HERO — первый экран, прозрачный -->
+  <section id="hero">
+    <div class="hero-eyebrow" data-en="Premium Car Detailing · Dubai" data-ru="Премиум детейлинг · Дубай">Premium Car Detailing · Dubai</div>
+    <div class="hero-title" data-en="Your Car.<br>Your Home." data-ru="Ваш автомобиль.<br>Ваш дом.">Your Car.<br>Your Home.</div>
+    <div class="hero-sub" data-en="We come to you. Professional detailing at your doorstep, anywhere in Dubai." data-ru="Мы приезжаем к вам. Профессиональный детейлинг у вашего порога, в любой точке Дубая.">We come to you. Professional detailing at your doorstep, anywhere in Dubai.</div>
+    <a href="#services" class="hero-cta" data-en="Explore Services" data-ru="Наши услуги">Explore Services</a>
+    <div id="scroll-hint">
+      <span data-en="scroll" data-ru="скролл">scroll</span>
+      <div class="scroll-line"></div>
+    </div>
+  </section>
+
+  <!-- ПРОБЕЛ — видео играет пока скроллим -->
+  <div class="video-spacer"></div>
+
+  <!-- SERVICES -->
+  <section id="services" class="glass">
+    <div class="section-inner">
+      <div class="reveal">
+        <div class="section-label" data-en="What We Do" data-ru="Что мы делаем">What We Do</div>
+        <div class="section-title" data-en="Our Services" data-ru="Наши услуги">Our Services</div>
+      </div>
+      <div class="services-grid">
+        <div class="service-card reveal">
+          <div class="svc-num">01</div>
+          <div class="svc-name" data-en="Exterior Detail" data-ru="Внешний детейлинг">Exterior Detail</div>
+          <div class="svc-desc" data-en="Deep hand wash, clay bar, paint decontamination, tyre dressing and streak-free glass." data-ru="Глубокая ручная мойка, обработка глиной, деконтаминация покрытия, чернение шин и чистка стёкол.">Deep hand wash, clay bar, paint decontamination, tyre dressing and streak-free glass.</div>
+          <span class="svc-tag" data-en="From 2h" data-ru="От 2 часов">From 2h</span>
+        </div>
+        <div class="service-card reveal">
+          <div class="svc-num">02</div>
+          <div class="svc-name" data-en="Interior Detail" data-ru="Внутренний детейлинг">Interior Detail</div>
+          <div class="svc-desc" data-en="Full vacuum, steam clean, leather conditioning, odour elimination and dashboard dressing." data-ru="Полная уборка, паровая чистка, кондиционирование кожи, устранение запахов и обработка панели.">Full vacuum, steam clean, leather conditioning, odour elimination and dashboard dressing.</div>
+          <span class="svc-tag" data-en="From 2h" data-ru="От 2 часов">From 2h</span>
+        </div>
+        <div class="service-card reveal">
+          <div class="svc-num">03</div>
+          <div class="svc-name" data-en="Paint Correction" data-ru="Полировка кузова">Paint Correction</div>
+          <div class="svc-desc" data-en="Machine polishing to remove swirl marks, light scratches and oxidation. Restores factory gloss." data-ru="Машинная полировка для удаления голограмм, царапин и окисления. Восстанавливает заводской блеск.">Machine polishing to remove swirl marks, light scratches and oxidation. Restores factory gloss.</div>
+          <span class="svc-tag" data-en="From 4h" data-ru="От 4 часов">From 4h</span>
+        </div>
+        <div class="service-card reveal">
+          <div class="svc-num">04</div>
+          <div class="svc-name" data-en="Ceramic Coating" data-ru="Керамическое покрытие">Ceramic Coating</div>
+          <div class="svc-desc" data-en="Nano-ceramic protection lasting 2–5 years. Hydrophobic, UV-resistant and scratch-hardened." data-ru="Нано-керамическая защита сроком 2–5 лет. Гидрофобное, УФ-стойкое и твёрдое покрытие.">Nano-ceramic protection lasting 2–5 years. Hydrophobic, UV-resistant and scratch-hardened.</div>
+          <span class="svc-tag" data-en="From 6h" data-ru="От 6 часов">From 6h</span>
+        </div>
+        <div class="service-card reveal">
+          <div class="svc-num">05</div>
+          <div class="svc-name" data-en="PPF Film" data-ru="Защитная плёнка PPF">PPF Film</div>
+          <div class="svc-desc" data-en="Self-healing urethane film on high-impact zones. Invisible protection against stone chips." data-ru="Самовосстанавливающаяся уретановая плёнка. Невидимая защита от сколов и дорожного мусора.">Self-healing urethane film on high-impact zones. Invisible protection against stone chips.</div>
+          <span class="svc-tag" data-en="From 1 day" data-ru="От 1 дня">From 1 day</span>
+        </div>
+        <div class="service-card reveal">
+          <div class="svc-num">06</div>
+          <div class="svc-name" data-en="Full Valet" data-ru="Полный детейлинг">Full Valet</div>
+          <div class="svc-desc" data-en="The complete BLANC treatment: exterior + interior + paint enhancement. All in one visit." data-ru="Полный комплекс BLANC: экстерьер + интерьер + улучшение покрытия. Всё за один визит.">The complete BLANC treatment: exterior + interior + paint enhancement. All in one visit.</div>
+          <span class="svc-tag" data-en="From 5h" data-ru="От 5 часов">From 5h</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ПРОБЕЛ -->
+  <div class="video-spacer"></div>
+
+  <!-- PRICING -->
+  <section id="pricing" class="glass">
+    <div class="section-inner">
+      <div class="reveal">
+        <div class="section-label" data-en="Transparent Pricing" data-ru="Прозрачные цены">Transparent Pricing</div>
+        <div class="section-title" data-en="Simple Packages" data-ru="Простые пакеты">Simple Packages</div>
+      </div>
+      <div class="pricing-grid">
+        <div class="price-card reveal">
+          <div class="price-tier" data-en="Essential" data-ru="Базовый">Essential</div>
+          <div class="price-amount">299</div>
+          <div class="price-cur" data-en="AED · per visit" data-ru="AED · за визит">AED · per visit</div>
+          <div class="price-line"></div>
+          <ul class="price-features">
+            <li data-en="Full exterior wash" data-ru="Полная наружная мойка">Full exterior wash</li>
+            <li data-en="Interior vacuum" data-ru="Вакуумная уборка салона">Interior vacuum</li>
+            <li data-en="Glass cleaning" data-ru="Очистка стёкол">Glass cleaning</li>
+            <li data-en="Tyre dressing" data-ru="Чернение шин">Tyre dressing</li>
+          </ul>
+          <a href="#contact" class="price-btn" data-en="Book Now" data-ru="Записаться">Book Now</a>
+        </div>
+        <div class="price-card featured reveal">
+          <div class="price-badge" data-en="Popular" data-ru="Популярный">Popular</div>
+          <div class="price-tier" data-en="Premium" data-ru="Премиум">Premium</div>
+          <div class="price-amount">699</div>
+          <div class="price-cur" data-en="AED · per visit" data-ru="AED · за визит">AED · per visit</div>
+          <div class="price-line"></div>
+          <ul class="price-features">
+            <li data-en="Everything in Essential" data-ru="Всё из Базового">Everything in Essential</li>
+            <li data-en="Clay bar decontamination" data-ru="Обработка глиной">Clay bar decontamination</li>
+            <li data-en="Steam interior clean" data-ru="Паровая чистка салона">Steam interior clean</li>
+            <li data-en="Leather conditioning" data-ru="Кондиционирование кожи">Leather conditioning</li>
+            <li data-en="1-step paint polish" data-ru="Однощаговая полировка">1-step paint polish</li>
+          </ul>
+          <a href="#contact" class="price-btn" data-en="Book Now" data-ru="Записаться">Book Now</a>
+        </div>
+        <div class="price-card reveal">
+          <div class="price-tier" data-en="Signature" data-ru="Сигнатура">Signature</div>
+          <div class="price-amount">1 499</div>
+          <div class="price-cur" data-en="AED · per visit" data-ru="AED · за визит">AED · per visit</div>
+          <div class="price-line"></div>
+          <ul class="price-features">
+            <li data-en="Everything in Premium" data-ru="Всё из Премиум">Everything in Premium</li>
+            <li data-en="2-stage paint correction" data-ru="Двухэтапная коррекция">2-stage paint correction</li>
+            <li data-en="Ceramic sealant coat" data-ru="Нанесение керамики">Нанесение керамики</li>
+            <li data-en="Engine bay clean" data-ru="Чистка моторного отсека">Engine bay clean</li>
+            <li data-en="6-month protection" data-ru="Защита на 6 месяцев">6-month protection</li>
+          </ul>
+          <a href="#contact" class="price-btn" data-en="Book Now" data-ru="Записаться">Book Now</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ПРОБЕЛ -->
+  <div class="video-spacer"></div>
+
+  <!-- REVIEWS -->
+  <section id="reviews" class="glass">
+    <div class="section-inner">
+      <div class="reveal">
+        <div class="section-label" data-en="Client Stories" data-ru="Отзывы клиентов">Client Stories</div>
+        <div class="section-title" data-en="What They Say" data-ru="Что говорят">What They Say</div>
+      </div>
+      <div class="reviews-grid">
+        <div class="review-card reveal">
+          <div class="stars"><div class="star"></div><div class="star"></div><div class="star"></div><div class="star"></div><div class="star"></div></div>
+          <div class="review-text" data-en='"The team arrived on time, set up quietly in my parking and left the car in showroom condition. Absolutely flawless."' data-ru='"Команда приехала вовремя, тихо разместилась на парковке и оставила машину в состоянии шоурума. Безупречно."'>"The team arrived on time, set up quietly in my parking and left the car in showroom condition. Absolutely flawless."</div>
+          <div class="review-author">Khalid A.</div>
+          <div class="review-car">Range Rover Autobiography</div>
+        </div>
+        <div class="review-card reveal">
+          <div class="stars"><div class="star"></div><div class="star"></div><div class="star"></div><div class="star"></div><div class="star"></div></div>
+          <div class="review-text" data-en='"Used them for ceramic coating on my 911. The finish is incredible and they handled everything with white gloves."' data-ru='"Заказал керамику на 911. Результат невероятный, всё сделано в белых перчатках. Никакого стресса."'>"Used them for ceramic coating on my 911. The finish is incredible and they handled everything with white gloves."</div>
+          <div class="review-author">Dmitri V.</div>
+          <div class="review-car">Porsche 911 Carrera S</div>
+        </div>
+        <div class="review-card reveal">
+          <div class="stars"><div class="star"></div><div class="star"></div><div class="star"></div><div class="star"></div><div class="star"></div></div>
+          <div class="review-text" data-en='"BLANC brought the paint back to life before I sold my G-Wagon. The buyer paid full asking price. Worth every dirham."' data-ru='"BLANC вернул краске жизнь перед продажей G-Wagon. Покупатель заплатил полную цену. Каждый дирхам того стоит."'>"BLANC brought the paint back to life before I sold my G-Wagon. The buyer paid full asking price. Worth every dirham."</div>
+          <div class="review-author">Sara M.</div>
+          <div class="review-car">Mercedes G63 AMG</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ПРОБЕЛ -->
+  <div class="video-spacer"></div>
+
+  <!-- CONTACT -->
+  <section id="contact" class="glass">
+    <div class="section-inner">
+      <div class="contact-grid">
+        <div class="reveal">
+          <div class="section-label" data-en="Get In Touch" data-ru="Свяжитесь с нами">Get In Touch</div>
+          <div class="section-title" data-en="Book a Visit" data-ru="Записаться на визит">Book a Visit</div>
+          <p class="contact-desc" data-en="We operate 7 days a week across all Dubai districts. Leave your details and we confirm within 1 hour." data-ru="Работаем 7 дней в неделю по всем районам Дубая. Оставьте данные — подтвердим запись в течение 1 часа.">We operate 7 days a week across all Dubai districts. Leave your details and we confirm within 1 hour.</p>
+          <div class="contact-items">
+            <div>
+              <div class="contact-item-label">WhatsApp</div>
+              <a href="https://wa.me/971500000000" class="contact-item-val">+971 50 000 0000</a>
+            </div>
+            <div>
+              <div class="contact-item-label">Email</div>
+              <a href="mailto:hello@blanc.ae" class="contact-item-val">hello@blanc.ae</a>
+            </div>
+            <div>
+              <div class="contact-item-label" data-en="Service Area" data-ru="Зона обслуживания">Service Area</div>
+              <span class="contact-item-val" data-en="All Dubai · 7 days · 8am–8pm" data-ru="Весь Дубай · 7 дней · 8:00–20:00">All Dubai · 7 days · 8am–8pm</span>
+            </div>
+          </div>
+        </div>
+        <div class="reveal">
+          <div class="contact-form">
+            <input class="f-field" type="text"  placeholder="Name / Имя">
+            <input class="f-field" type="tel"   placeholder="WhatsApp / Phone">
+            <input class="f-field" type="text"  placeholder="Car make & model / Марка и модель">
+            <select class="f-field" style="appearance:none; cursor:none;">
+              <option value="" disabled selected>Select service / Услуга</option>
+              <option>Essential — 299 AED</option>
+              <option>Premium — 699 AED</option>
+              <option>Signature — 1 499 AED</option>
+              <option>Custom / Other</option>
+            </select>
+            <textarea class="f-field" placeholder="Address in Dubai / Адрес в Дубае"></textarea>
+            <button class="f-submit" data-en="Send Request →" data-ru="Отправить запрос →">Send Request →</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="footer-logo">BLANC</div>
+    <div class="footer-copy" data-en="© 2025 BLANC Detailing Dubai" data-ru="© 2025 BLANC Detailing Dubai">© 2025 BLANC Detailing Dubai</div>
+  </footer>
+
+</div><!-- end #content -->
+
+<script>
+// ── SETTINGS
+const FRAMES_DIR   = 'frames/';
+const FRAME_PREFIX = 'frame_';
+const FRAME_EXT    = '.jpg';
+const TOTAL_FRAMES = 100;
+const PAD          = 4;
+
+// ── CURSOR
+const cursor = document.getElementById('cursor');
+document.addEventListener('mousemove', e => {
+  cursor.style.left = e.clientX + 'px';
+  cursor.style.top  = e.clientY + 'px';
+});
+document.querySelectorAll('a,button,.service-card,.price-card,.review-card').forEach(el => {
+  el.addEventListener('mouseenter', () => cursor.classList.add('big'));
+  el.addEventListener('mouseleave', () => cursor.classList.remove('big'));
+});
+
+// ── LANG
+let lang = 'en';
+function toggleLang() {
+  lang = lang === 'en' ? 'ru' : 'en';
+  document.querySelector('.lang-btn').textContent = lang === 'en' ? 'RU' : 'EN';
+  document.querySelectorAll('[data-en]').forEach(el => {
+    const t = el.getAttribute('data-' + lang);
+    if (t) el.innerHTML = t;
+  });
+}
+
+// ── CANVAS FRAMES
+const canvas  = document.getElementById('bg-canvas');
+const ctx     = canvas.getContext('2d');
+const loader  = document.getElementById('loader');
+const lFill   = document.getElementById('loader-fill');
+const lPct    = document.getElementById('loader-pct');
+const hint    = document.getElementById('scroll-hint');
+const overlay = document.getElementById('bg-overlay');
+
+const frames  = new Array(TOTAL_FRAMES);
+let loaded    = 0;
+let current   = -1;
+
+function resize() {
+  canvas.width  = window.innerWidth;
+  canvas.height = window.innerHeight;
+  if (current >= 0 && frames[current]) drawFrame(current);
+}
+window.addEventListener('resize', resize);
+resize();
+
+function frameName(i) {
+  return FRAMES_DIR + FRAME_PREFIX + String(i+1).padStart(PAD,'0') + FRAME_EXT;
+}
+
+function drawFrame(index) {
+  const img = frames[index];
+  if (!img || !img.complete) return;
+  const cw = canvas.width, ch = canvas.height;
+  const iw = img.naturalWidth, ih = img.naturalHeight;
+  const scale = Math.max(cw/iw, ch/ih);
+  const w = iw*scale, h = ih*scale;
+  ctx.drawImage(img, (cw-w)/2, (ch-h)/2, w, h);
+  current = index;
+}
+
+function loadFrames() {
+  for (let i = 0; i < TOTAL_FRAMES; i++) {
+    const img = new Image();
+    img.src = frameName(i);
+    img.onload = () => {
+      loaded++;
+      const p = Math.round(loaded / TOTAL_FRAMES * 100);
+      lFill.style.width = p + '%';
+      lPct.textContent  = p + '%';
+      if (loaded === TOTAL_FRAMES) {
+        drawFrame(0);
+        setTimeout(() => loader.classList.add('done'), 400);
+      }
+    };
+    img.onerror = () => { loaded++; };
+    frames[i] = img;
+  }
+}
+loadFrames();
+
+// ── SCROLL — кадры + затемнение фона под секциями
+let hintHidden = false;
+
+window.addEventListener('scroll', () => {
+  const total    = document.body.scrollHeight - window.innerHeight;
+  const progress = Math.min(window.scrollY / total, 1);
+  const index    = Math.min(Math.floor(progress * TOTAL_FRAMES), TOTAL_FRAMES - 1);
+
+  if (index !== current) drawFrame(index);
+
+  // затемняем фон когда секции перекрывают его
+  const dark = Math.min(progress * 1.5, 0.35);
+  overlay.style.background = `rgba(0,0,0,${dark})`;
+
+  if (progress > 0.02 && !hintHidden) {
+    hint.classList.add('hidden');
+    hintHidden = true;
+  } else if (progress <= 0.02 && hintHidden) {
+    hint.classList.remove('hidden');
+    hintHidden = false;
+  }
+}, { passive: true });
+
+// ── REVEAL
+const observer = new IntersectionObserver(entries => {
+  entries.forEach((e, i) => {
+    if (e.isIntersecting) {
+      setTimeout(() => e.target.classList.add('visible'), i * 80);
+      observer.unobserve(e.target);
+    }
+  });
+}, { threshold: 0.12 });
+document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+</script>
+</body>
+</html>
